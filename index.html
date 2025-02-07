@@ -11,23 +11,23 @@
     <title>Product App</title>
 </head>
 <body>
-    <div id="app">
-        <h1>Kanban доска</h1>
-        <kanban-column
-                title="Запланированные задачи"
-                :tasks="plannedTasks"
-                @add-task="addTask"
-                @delete-task="(title, index) => deleteTask(title, index)"
-                @edit-task="(title, task, index) => editTask(title, task, index)"
-                @move-task="(title, index) => moveTask(title, 'Задачи в работе', index)">
-        </kanban-column>
-        <kanban-column
-                title="Задачи в работе"
-                :tasks="inProgressTasks"
-                @delete-task="(title, index) => deleteTask(title, index)"
-                @edit-task="(title, task, index) => editTask(title, task, index)"
-                @move-task="(title, index) => moveTask(title, 'Тестирование', index)">
-        </kanban-column>
-    </div>
+<div id="app">
+    <h1>Kanban доска</h1>
+    <kanban-column
+            title="Запланированные задачи"
+            :tasks="plannedTasks"
+            @add-task="addTask"
+            @delete-task="(title, index) => deleteTask(title, index)"
+            @edit-task="(title, task, index) => editTask(title, task, index)"
+            @move-task="(title, index) => moveTask(title, 'Задачи в работе', index)">
+    </kanban-column>
+    <kanban-column
+            title="Задачи в работе"
+            :tasks="inProgressTasks"
+            @delete-task="(title, index) => deleteTask(title, index)"
+            @edit-task="(title, task, index) => editTask(title, task, index)"
+            @move-task="(title, index) => moveTask(title, 'Тестирование', index)">
+    </kanban-column>
+</div>
 </body>
 </html>

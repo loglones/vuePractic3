@@ -15,7 +15,7 @@ Vue.component('kanban-column', {
                     :key="task.id" 
                     :task="task" 
                     @delete="$emit('delete-task', title, index)" 
-                    @edit="$emit('edit-task', title, task, index)" 
+                    @edit="$emit('edit-task', title, $event, index)" 
                     @move="$emit('move-task', title, index)">
              </task-card>
         </div>
@@ -37,21 +37,12 @@ Vue.component('kanban-column', {
                 id: Date.now(),
                 createdAt: new Date().toLocaleString(),
                 lastEditedAt: new Date().toLocaleString(),
-                ...this.newTask
+                ...this.newTask,
+                isEditing: false
             };
             console.log('Добавлена новая задача:', task);
             this.$emit('add-task', task);
             this.newTask = { title: '', description: '', deadline: '' };
-        },
-        handleDelete(title, index) {
-            this.$emit('delete-task', title, index);
-        },
-        handleEdit(title, task, index) {
-            const editTask = { ...task, lastEdited: new Date().toLocaleString(), isEditing: true };
-            this.$emit('edit-task', title, editTask, index);
-        },
-        handleMove(title, index) {
-            this.$emit('move-task', title, index);
         }
     }
 });
@@ -67,7 +58,7 @@ Vue.component('task-card', {
             <p><strong>Создана:</strong> {{ task.createdAt }}</p>
             <p><strong>Последнее изменение:</strong> {{ task.lastEdited }}</p>
             <div class="actions">
-                <button class="edit-btn" @click="$emit('edit')">Редактировать</button>
+                <button class="edit-btn" @click="startEdit">Редактировать</button>
                 <button class="delete-btn" @click="$emit('delete')">Удалить</button>
                 <button class="move-btn" @click="$emit('move')">Переместить</button>
             </div>
@@ -83,23 +74,25 @@ Vue.component('task-card', {
         </template>
     </div>`,
     methods: {
+        startEdit() {
+            console.log('Режим редактирования активирован');
+            this.$emit('edit', { ...this.task, isEditing: true }); // Передаём задачу с флагом isEditing
+        },
         saveTask() {
-            this.task.isEditing = false;
-            this.task.lastEditedAt = new Date().toLocaleString();
-            this.$emit('edit');
+            const updatedTask = { ...this.task, isEditing: false, lastEditedAt: new Date().toLocaleString() };
+            this.$emit('edit', updatedTask); // Передаём обновлённую задачу
         },
         cancelEdit() {
-            this.task.isEditing = false;
+            this.$emit('edit', { ...this.task, isEditing: false }); // Отмена редактирования
         }
     }
-})
+});
 
 new Vue({
     el: '#app',
     data: {
         plannedTasks: [],
         inProgressTasks: [],
-
     },
     methods: {
         addTask(task) {
@@ -113,11 +106,8 @@ new Vue({
             }
         },
         editTask(column, updatedTask, index) {
-            if (column === 'Запланированные задачи') {
-                this.$set(this.plannedTasks, index, updatedTask);
-            } else if (column === 'Задачи в работе') {
-                this.$set(this.inProgressTasks, index, updatedTask);
-            }
+            let tasksArray = column === 'Запланированные задачи' ? this.plannedTasks : this.inProgressTasks;
+            this.$set(tasksArray, index, updatedTask);
         },
         moveTask(fromColumn, toColumn, index) {
             let movedTask;
@@ -136,4 +126,4 @@ new Vue({
             }
         }
     }
-})
+});
