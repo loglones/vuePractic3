@@ -23,6 +23,41 @@ Vue.component('kanban-column', {
         }
     },
     methods: {
+        submitTask() {
+            if(!this.newTask.title || !this.newTask.description || !this.newTask.deadline) return;
 
+            const task = {
+                id: Date.now(),
+                createdAt: new Date().toLocaleString(),
+                lastEditedAt: new Date().toLocaleString(),
+                ...this.newTask
+            };
+            this.$emit('add-task', task);
+            this.newTask = {title: '', description: '', deadline: ''};
+        },
+
+
+    }
+})
+
+new Vue({
+    el: '#app',
+    data: {
+        plannedTasks: [],
+    },
+    methods: {
+        addTask() {
+            this.plannedTasks.push(task);
+        },
+        deleteTask(index) {
+            this.plannedTasks.splice(index, 1);
+        },
+        editTask(updatedTask,index) {
+            this.plannedTasks[index] = updatedTask;
+        },
+        moveTask(index) {
+            const movedTask = this.plannedTasks.splice(index, 1)[0];
+
+        }
     }
 })
