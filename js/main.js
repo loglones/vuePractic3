@@ -48,7 +48,7 @@ Vue.component('kanban-column', {
             this.$emit('delete-task', index);
         },
         handleEdit(task, index) {
-            const editTask = { ...task, lastEdited: new Date().toLocaleString() };
+            const editTask = { ...task, lastEdited: new Date().toLocaleString(), isEditing: true };
             this.$emit('edit-task', editTask, index);
         },
         handleMove(index) {
@@ -62,17 +62,38 @@ Vue.component('task-card', {
     props: ['task'],
     template: `
     <div class="task-card">
-        <h3>{{ task.title }}</h3>
-        <p><strong>Описание:</strong> {{ task.description }}</p>
-        <p><strong>Дэдлайн:</strong> {{ task.deadline }}</p>
-        <p><strong>Создана:</strong> {{ task.createdAt }}</p>
-        <p><strong>Последнее изменение:</strong> {{ task.lastEdited }}</p>
-        <div class="actions">
-            <button class="edit-btn" @click="$emit('edit')">Редактировать</button>
-            <button class="delete-btn" @click="$emit('delete')">Удалить</button>
-            <button class="move-btn" @click="$emit('move')">Переместить</button>
-        </div>
-    </div>`
+        <template v-if="!task.isEditing">
+            <h3>{{ task.title }}</h3>
+            <p><strong>Описание:</strong> {{ task.description }}</p>
+            <p><strong>Дэдлайн:</strong> {{ task.deadline }}</p>
+            <p><strong>Создана:</strong> {{ task.createdAt }}</p>
+            <p><strong>Последнее изменение:</strong> {{ task.lastEdited }}</p>
+            <div class="actions">
+                <button class="edit-btn" @click="$emit('edit')">Редактировать</button>
+                <button class="delete-btn" @click="$emit('delete')">Удалить</button>
+                <button class="move-btn" @click="$emit('move')">Переместить</button>
+            </div>
+        </template>
+        <template v-else>
+            <input type="text" v-model="task.title" placeholder="Заголовок задачи" />
+            <textarea v-model="task.description" placeholder="Описание задачи"></textarea>
+            <input type="date" v-model="task.deadline" placeholder="Дэдлайн" />
+            <div class="actions">
+                <button class="save-btn" @click="saveTask">Сохранить</button>
+                <button class="cancel-btn" @click="cancelEdit">Отмена</button>
+            </div>
+        </template>
+    </div>`,
+    methods: {
+        saveTask() {
+            this.task.isEditing = false;
+            this.task.lastEditedAt = new Date().toLocaleString();
+            this.$emit('edit');
+        },
+        cancelEdit() {
+            this.task.isEditing = false;
+        }
+    }
 })
 
 new Vue({
@@ -88,7 +109,7 @@ new Vue({
             this.plannedTasks.splice(index, 1);
         },
         editTask(updatedTask,index) {
-            this.plannedTasks[index] = updatedTask;
+            this.$set(this.plannedTasks, index, updatedTask);
         },
         moveTask(index) {
             const movedTask = this.plannedTasks.splice(index, 1)[0];
