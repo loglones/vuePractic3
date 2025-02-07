@@ -13,6 +13,7 @@
 <body>
     <div id="app">
         <h1>Kanban доска</h1>
+        <kanban-column title="Запланированные задачи" :tasks="plannedTasks" @add-task="addTask" @delete-task="deleteTask" @edit-task="editTask" @move-task="moveTask"></kanban-column>
     </div>
 </body>
 </html>
