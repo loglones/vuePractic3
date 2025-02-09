@@ -14,9 +14,11 @@ Vue.component('kanban-column', {
                     v-for="(task, index) in tasks" 
                     :key="task.id" 
                     :task="task" 
+                    :title="title"
                     @delete="$emit('delete-task', title, index)" 
                     @edit="$emit('edit-task', title, $event, index)" 
-                    @move="$emit('move-task', title, index)">
+                    @move="$emit('move-task', title, index)"
+                    @return="$emit('return-task', title, index, $event)">
              </task-card>
         </div>
         <p v-else>Задач нет</p>
@@ -48,7 +50,7 @@ Vue.component('kanban-column', {
 });
 
 Vue.component('task-card', {
-    props: ['task'],
+    props: ['task', 'title'],
     template: `
     <div class="task-card">
         <template v-if="!task.isEditing">
@@ -56,11 +58,13 @@ Vue.component('task-card', {
             <p><strong>Описание:</strong> {{ task.description }}</p>
             <p><strong>Дэдлайн:</strong> {{ task.deadline }}</p>
             <p><strong>Создана:</strong> {{ task.createdAt }}</p>
-            <p><strong>Последнее изменение:</strong> {{ task.lastEdited }}</p>
+            <p><strong>Последнее изменение:</strong> {{ task.lastEditedAt }}</p>
+            <p v-if="task.returnReason"><strong>Причина возврата:</strong> {{ task.returnReason }}</p>
             <div class="actions">
                 <button class="edit-btn" @click="startEdit">Редактировать</button>
                 <button class="delete-btn" @click="$emit('delete')">Удалить</button>
-                <button class="move-btn" @click="$emit('move')">Переместить</button>
+                <button class="move-btn" @click="moveTask">Переместить</button>
+                <button class="return-btn" v-if="title === 'Тестирование'" @click="showReturnReasonPrompt">Вернуть</button>
             </div>
         </template>
         <template v-else>
@@ -76,14 +80,23 @@ Vue.component('task-card', {
     methods: {
         startEdit() {
             console.log('Режим редактирования активирован');
-            this.$emit('edit', { ...this.task, isEditing: true }); // Передаём задачу с флагом isEditing
+            this.$emit('edit', { ...this.task, isEditing: true });
         },
         saveTask() {
             const updatedTask = { ...this.task, isEditing: false, lastEditedAt: new Date().toLocaleString() };
-            this.$emit('edit', updatedTask); // Передаём обновлённую задачу
+            this.$emit('edit', updatedTask);
         },
         cancelEdit() {
-            this.$emit('edit', { ...this.task, isEditing: false }); // Отмена редактирования
+            this.$emit('edit', { ...this.task, isEditing: false });
+        },
+        showReturnReasonPrompt() {
+            const reason = prompt('Введите причину возврата:');
+            if (reason !== null) {
+                this.$emit('return', reason);
+            }
+        },
+        moveTask() {
+            this.$emit('move');
         }
     }
 });
@@ -93,6 +106,8 @@ new Vue({
     data: {
         plannedTasks: [],
         inProgressTasks: [],
+        testingTasks: [],
+        completedTasks: []
     },
     methods: {
         addTask(task) {
@@ -103,11 +118,26 @@ new Vue({
                 this.plannedTasks.splice(index, 1);
             } else if (column === 'Задачи в работе') {
                 this.inProgressTasks.splice(index, 1);
+            } else if (column === 'Тестирование') {
+                this.testingTasks.splice(index, 1);
+            } else if (column === 'Выполненные задачи') {
+                this.completedTasks.splice(index, 1);
             }
         },
         editTask(column, updatedTask, index) {
-            let tasksArray = column === 'Запланированные задачи' ? this.plannedTasks : this.inProgressTasks;
-            this.$set(tasksArray, index, updatedTask);
+            let tasksArray;
+            if (column === 'Запланированные задачи') {
+                tasksArray = this.plannedTasks;
+            } else if (column === 'Задачи в работе') {
+                tasksArray = this.inProgressTasks;
+            } else if (column === 'Тестирование') {
+                tasksArray = this.testingTasks;
+            } else if (column === 'Выполненные задачи') {
+                tasksArray = this.completedTasks;
+            }
+            if (tasksArray) {
+                this.$set(tasksArray, index, updatedTask);
+            }
         },
         moveTask(fromColumn, toColumn, index) {
             let movedTask;
@@ -121,8 +151,23 @@ new Vue({
             } else if (fromColumn === 'Задачи в работе') {
                 movedTask = this.inProgressTasks.splice(index, 1)[0];
                 if (toColumn === 'Тестирование') {
+                    this.testingTasks.push(movedTask);
                     console.log('Перемещено в "Тестирование":', movedTask);
                 }
+            } else if (fromColumn === 'Тестирование') {
+                movedTask = this.testingTasks.splice(index, 1)[0];
+                if (toColumn === 'Выполненные задачи') {
+                    this.completedTasks.push(movedTask);
+                    console.log('Перемещено в "Выполненные задачи":', movedTask);
+                }
+            }
+        },
+        returnTask(fromColumn, index, reason) {
+            if (fromColumn === 'Тестирование') {
+                const movedTask = this.testingTasks.splice(index, 1)[0];
+                movedTask.returnReason = reason || 'Не указано';
+                this.inProgressTasks.push(movedTask);
+                console.log('Возвращено в "Задачи в работе" с причиной:', movedTask.returnReason);
             }
         }
     }
