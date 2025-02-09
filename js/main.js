@@ -52,7 +52,7 @@ Vue.component('kanban-column', {
 Vue.component('task-card', {
     props: ['task', 'title'],
     template: `
-    <div class="task-card">
+    <div class="task-card" :class="{ 'overdue': isOverdue && title === 'Выполненные задачи' }">
         <template v-if="!task.isEditing">
             <h3>{{ task.title }}</h3>
             <p><strong>Описание:</strong> {{ task.description }}</p>
@@ -60,6 +60,7 @@ Vue.component('task-card', {
             <p><strong>Создана:</strong> {{ task.createdAt }}</p>
             <p><strong>Последнее изменение:</strong> {{ task.lastEditedAt }}</p>
             <p v-if="task.returnReason"><strong>Причина возврата:</strong> {{ task.returnReason }}</p>
+            <p v-if="isOverdue && title === 'Выполненные задачи'" class="overdue-text">Задача выполнена не в срок</p>
             <div class="actions">
                 <button class="edit-btn" @click="startEdit">Редактировать</button>
                 <button class="delete-btn" @click="$emit('delete')">Удалить</button>
@@ -77,6 +78,14 @@ Vue.component('task-card', {
             </div>
         </template>
     </div>`,
+    computed: {
+        isOverdue() {
+            if (!this.task.deadline) return false;
+            const deadline = new Date(this.task.deadline);
+            const now = new Date();
+            return now > deadline;
+        }
+    },
     methods: {
         startEdit() {
             console.log('Режим редактирования активирован');

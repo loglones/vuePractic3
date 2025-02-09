@@ -173,3 +173,20 @@ h1 {
     color: #999;
     font-size: 1rem;
 }
+.task-card {
+    border: 1px solid #ccc;
+    padding: 10px;
+    margin-bottom: 10px;
+    border-radius: 5px;
+    background-color: #fff;
+}
+
+.task-card.overdue {
+    background-color: #ffebee;
+    border-color: #ffcdd2;
+}
+
+.overdue-text {
+    color: #d32f2f;
+    font-weight: bold;
+}
